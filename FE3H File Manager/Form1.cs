@@ -131,8 +131,6 @@ namespace FE3H_File_Manager
             if (path.Length == 0)
             {
                 MessageBox.Show("File path not specified.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
-
                 return;
             }
 
@@ -185,6 +183,82 @@ namespace FE3H_File_Manager
         private void GithubToolStripMenuItem_Click_1(object sender, EventArgs e)
         {
             System.Diagnostics.Process.Start("https://github.com/bqio/fe3hfilemanager");
+        }
+
+        private async void AllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show("Do you want to create a structure from all available paths?", "Question", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes) {
+                if (dataPath.Length == 0 || tmpPath.Length == 0)
+                {
+                    MessageBox.Show("Select the DATA0.bin file and the dist directory for the files in the open menu.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                string dataDir = Path.GetDirectoryName(dataPath);
+
+
+                menu.Enabled = false;
+                dataGridView1.Enabled = false;
+
+                using (var metaReader = new BinaryReader(File.OpenRead(dataPath)))
+                {
+                    using (var dataReader = new BinaryReader(File.OpenRead(dataDir + "\\DATA1.bin")))
+                    {
+                        for (int i = 0; i < dataGridView1.Rows.Count - 1; i++)
+                        {
+                            string path = dataGridView1.Rows[i].Cells[1].Value.ToString();
+                            toolStripStatusLabel2.Text = path;
+
+                            if (path.Length != 0)
+                            {
+                                int offset = i * 32;
+
+                                metaReader.BaseStream.Position = offset;
+
+                                long foffset = metaReader.ReadInt64();
+                                long funcompressedSize = metaReader.ReadInt64();
+                                long fcompressedSize = metaReader.ReadInt64();
+                                long fisCompressed = metaReader.ReadInt64();
+
+                                dataReader.BaseStream.Position = foffset;
+
+                                if (fisCompressed == 1)
+                                {
+                                    if (fcompressedSize > 0)
+                                    {
+                                        if (!Directory.Exists(tmpPath + "\\" + Path.GetDirectoryName(path)))
+                                        {
+                                            Directory.CreateDirectory(tmpPath + "\\" + Path.GetDirectoryName(path));
+                                        }
+
+                                        await Task.Run(async () => {
+                                            File.WriteAllBytes(tmpPath + "\\" + path, dataReader.ReadBytes((int)fcompressedSize));
+                                        });
+                                    }
+                                }
+                                else
+                                {
+                                    if (funcompressedSize > 0)
+                                    {
+                                        if (!Directory.Exists(tmpPath + "\\" + Path.GetDirectoryName(path)))
+                                        {
+                                            Directory.CreateDirectory(tmpPath + "\\" + Path.GetDirectoryName(path));
+                                        }
+
+                                        await Task.Run(async () => {
+                                            File.WriteAllBytes(tmpPath + "\\" + path, dataReader.ReadBytes((int)funcompressedSize));
+                                        });
+                                    }
+                                }
+                            }
+                        }
+
+                        MessageBox.Show("Structure successfully created.", "Notification", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        menu.Enabled = true;
+                        dataGridView1.Enabled = true;
+                    }
+                }
+            }
         }
     }
 }
