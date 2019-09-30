@@ -196,7 +196,6 @@ namespace FE3H_File_Manager
 
                 string dataDir = Path.GetDirectoryName(dataPath);
 
-
                 menu.Enabled = false;
                 dataGridView1.Enabled = false;
 
@@ -259,6 +258,77 @@ namespace FE3H_File_Manager
                     }
                 }
             }
+        }
+
+        private void NewCustomRangeScriptToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (dataPath.Length == 0 || tmpPath.Length == 0)
+            {
+                MessageBox.Show("Select the DATA0.bin file and the dist directory for the files in the open menu.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            crs crs = new crs();
+            crs.Owner = this;
+            crs.Show();
+        }
+
+        public async void CreateCustomRangeScript(string pathScript, int rangeStart, int rangeEnd)
+        {
+            for (int i = rangeStart; i < rangeEnd; i++)
+            {
+                int offset = i * 32;
+                string path = pathScript.Replace("$", i.ToString());
+
+                using (var metaReader = new BinaryReader(File.OpenRead(dataPath)))
+                {
+                    metaReader.BaseStream.Position = offset;
+
+                    long foffset = metaReader.ReadInt64();
+                    long funcompressedSize = metaReader.ReadInt64();
+                    long fcompressedSize = metaReader.ReadInt64();
+                    long fisCompressed = metaReader.ReadInt64();
+
+                    string dataDir = Path.GetDirectoryName(dataPath);
+
+                    using (var dataReader = new BinaryReader(File.OpenRead(dataDir + "\\DATA1.bin")))
+                    {
+                        dataReader.BaseStream.Position = foffset;
+
+                        if (fisCompressed == 1)
+                        {
+                            if (fcompressedSize > 0)
+                            {
+                                if (!Directory.Exists(tmpPath + "\\" + Path.GetDirectoryName(path)))
+                                {
+                                    Directory.CreateDirectory(tmpPath + "\\" + Path.GetDirectoryName(path));
+                                }
+
+                                await Task.Run(async () => {
+                                    File.WriteAllBytes(tmpPath + "\\" + path, dataReader.ReadBytes((int)fcompressedSize));
+                                });
+                            }
+                        }
+                        else
+                        {
+                            if (funcompressedSize > 0)
+                            {
+                                if (!Directory.Exists(tmpPath + "\\" + Path.GetDirectoryName(path)))
+                                {
+                                    Directory.CreateDirectory(tmpPath + "\\" + Path.GetDirectoryName(path));
+                                }
+
+                                await Task.Run(async () => {
+                                    File.WriteAllBytes(tmpPath + "\\" + path, dataReader.ReadBytes((int)funcompressedSize));
+                                });
+                            }
+                        }
+                    }
+                    toolStripStatusLabel2.Text = path;
+                }
+            }
+            MessageBox.Show("Structure successfully created.", "Notification", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            toolStripStatusLabel2.Text = "";
         }
     }
 }
