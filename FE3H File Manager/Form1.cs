@@ -55,13 +55,13 @@ namespace FE3H_File_Manager
                     table.Columns.Add("Path");
                     table.Columns.Add("Description");
 
-                    for (int i = 1; i < result.Tables[1].Rows.Count; i++)
+                    for (int i = 1; i < result.Tables[0].Rows.Count; i++)
                     {
                         DataRow dr = table.NewRow();
 
-                        dr["Index"] = result.Tables[1].Rows[i].ItemArray[0];
-                        dr["Path"] = result.Tables[1].Rows[i].ItemArray[2];
-                        dr["Description"] = result.Tables[1].Rows[i].ItemArray[3];
+                        dr["Index"] = result.Tables[0].Rows[i].ItemArray[0];
+                        dr["Path"] = result.Tables[0].Rows[i].ItemArray[2];
+                        dr["Description"] = result.Tables[0].Rows[i].ItemArray[3];
 
                         table.Rows.Add(dr);
                     }
