@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
 using System.Drawing;
 using System.IO;
@@ -30,9 +31,16 @@ namespace FE3H_File_Manager
 
         private void UpdateDataBase()
         {
-            string url = "https://docs.google.com/spreadsheets/d/18bCCrsHwyAU-JSlpvaulVos3j8dtPBr0mDB-vLWib54/export?format=xlsx&id=18bCCrsHwyAU-JSlpvaulVos3j8dtPBr0mDB-vLWib54";
+            string url = ConfigurationManager.AppSettings["databaseUrl"];
             WebClient myWebClient = new WebClient();
-            myWebClient.DownloadFile(url, "db.xlsx");
+            try
+            {
+                myWebClient.DownloadFile(url, "db.xlsx");
+            } catch (WebException e)
+            {
+                MessageBox.Show("Incorrect database url address.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
             DateTime dt = File.GetLastWriteTime("db.xlsx");
             toolStripStatusLabel1.Text = "Last update: " + dt;
@@ -53,21 +61,22 @@ namespace FE3H_File_Manager
 
                     table.Columns.Add("Index");
                     table.Columns.Add("Path");
-                    table.Columns.Add("Description");
+                    table.Columns.Add("Notes");
 
                     for (int i = 1; i < result.Tables[0].Rows.Count; i++)
                     {
                         DataRow dr = table.NewRow();
 
                         dr["Index"] = result.Tables[0].Rows[i].ItemArray[0];
-                        dr["Path"] = result.Tables[0].Rows[i].ItemArray[2];
-                        dr["Description"] = result.Tables[0].Rows[i].ItemArray[3];
+                        dr["Path"] = result.Tables[0].Rows[i].ItemArray[1];
+                        dr["Notes"] = result.Tables[0].Rows[i].ItemArray[2];
 
                         table.Rows.Add(dr);
                     }
                     
                     dataGridView1.DataSource = table;
                     dataGridView1.Columns[1].Width = 600;
+                    dataGridView1.Columns[2].Width = 600;
 
                     dataGridView1.Update();
                     WindowState = FormWindowState.Maximized;
@@ -125,7 +134,7 @@ namespace FE3H_File_Manager
             }
 
             int index = dataGridView1.CurrentCell.RowIndex;
-            int offset = index * 32;
+            int offset = Convert.ToInt32(dataGridView1.Rows[index].Cells[0].Value) * 32;
             string path = dataGridView1.Rows[index].Cells[1].Value.ToString();
 
             if (path.Length == 0)
@@ -329,6 +338,12 @@ namespace FE3H_File_Manager
             }
             MessageBox.Show("Structure successfully created.", "Notification", MessageBoxButtons.OK, MessageBoxIcon.Information);
             toolStripStatusLabel2.Text = "";
+        }
+
+        private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Settings sform = new Settings();
+            sform.ShowDialog();
         }
     }
 }
