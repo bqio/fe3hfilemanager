@@ -12,6 +12,6 @@ Creates a named database file structure.
 Example:
 nx/m/msg_$_ENG.bin
 
-Database url: https://docs.google.com/spreadsheets/d/18bCCrsHwyAU-JSlpvaulVos3j8dtPBr0mDB-vLWib54
+Database url: https://docs.google.com/spreadsheets/d/14HT0w3qaRPknzxeHysswVMUfry8J2G_RHY8k48Nmy5w
 
 ![Drag Racing](screenshot.png)
